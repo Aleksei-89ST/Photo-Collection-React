@@ -12,24 +12,25 @@ const categories = [
 ];
 
 function App() {
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
   const [categoryId, setCategoryId] = useState(0);
   const [collection, setCollection] = useState([]);
   const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {
-    axios(
-      `https://6315bbec5b85ba9b11e5eb64.mockapi.io/Collection?${
-        categoryId ? `category=${categoryId}` : ""
-      }`
-    )
+    setIsLoading(true);
+    const category = categoryId ? `category=${categoryId}` : "";
+    axios(`https://6315bbec5b85ba9b11e5eb64.mockapi.io/Collection?page=${page}&limit=3&${category}`)
       .then((res) => {
         setCollection(res.data);
       })
       .catch((err) => {
         console.warn(err);
         alert("Не удалось получить данные");
-      });
-  }, [categoryId]);
+      })
+      .finally(() => setIsLoading(false));
+  }, [categoryId,page]);
 
   return (
     <div className="App">
@@ -54,18 +55,28 @@ function App() {
         />
       </div>
       <div className="content">
-        {collection
-          .filter((obj) =>
-            obj.name.toLowerCase().includes(searchValue.toLowerCase())
-          )
-          .map((obj, index) => (
-            <Collection key={index} name={obj.name} images={obj.photos} />
-          ))}
+        {isLoading ? (
+          <h2>Идёт загрузка...</h2>
+        ) : (
+          collection
+            .filter((obj) =>
+              obj.name.toLowerCase().includes(searchValue.toLowerCase())
+            )
+            .map((obj, index) => (
+              <Collection key={index} name={obj.name} images={obj.photos} />
+            ))
+        )}
       </div>
       <ul className="pagination">
-        <li>1</li>
-        <li className="active">2</li>
-        <li>3</li>
+        {[...Array(3)].map((_, i) => (
+          <li
+            className={page === i + 1 ? "active" : ""}
+            key={i}
+            onClick={() => setPage(i + 1)}
+          >
+            {i + 1}
+          </li>
+        ))}
       </ul>
     </div>
   );
